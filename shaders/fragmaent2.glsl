@@ -6,8 +6,6 @@ uniform vec2 uTextureSize;
 varying vec2 vUv;
 varying vec2 vSize;
 
-//texture fitting in plane
-
 vec2 getUv(vec2 uv, vec2 textureSize, vec2 quadSize){
     vec2 tempUv =uv - vec2(0.5);
 

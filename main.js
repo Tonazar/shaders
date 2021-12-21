@@ -2,6 +2,8 @@ import "./style.css";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
+import gsap from "gsap";
+
 import * as dat from "dat.gui";
 
 import fragment from "./shaders/fragment.glsl";
@@ -24,7 +26,7 @@ export default class Sketch {
       1000
     );
 
-    //amera fov angle calculation
+    //camera fov angle calculation
     //this.camera.fov = 2 * Math.atan(this.height / 2 / 600)* 180 / Math.PI;
     const halfAngle = Math.atan(this.height / 2 / 600); // 600 distance from camera
     const radToDeg = (halfAngle * 180) / Math.PI; // Radien to Degree
@@ -64,20 +66,53 @@ export default class Sketch {
     this.camera.updateProjectionMatrix();
   }
   addObjects() {
-    this.geometry = new THREE.PlaneBufferGeometry(350, 350);
+    this.geometry = new THREE.PlaneBufferGeometry(300, 300, 100, 100);
     //Shaders
     this.material = new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 1.0 },
-        uProgress: { value: 1.0 },
+        uProgress: { value: 0 },
         uTexture: { value: new THREE.TextureLoader().load(testTexture) },
         uTextureSize: { value: new THREE.Vector2(100, 100) },
+        uCorners: { value: new THREE.Vector4(0, 0, 0, 0) },
         uResolution: { value: new THREE.Vector2(this.width, this.height) },
         uQuadSize: { value: new THREE.Vector2(300, 300) },
       },
       fragmentShader: fragment,
       vertexShader: vertex,
     });
+
+    //gsap
+    this.tl = gsap
+      .timeline()
+      .to(this.material.uniforms.uCorners.value, {
+        x: 1,
+        duration: 1,
+      })
+      .to(
+        this.material.uniforms.uCorners.value,
+        {
+          y: 1,
+          duration: 1,
+        },
+        0.2
+      )
+      .to(
+        this.material.uniforms.uCorners.value,
+        {
+          z: 1,
+          duration: 1,
+        },
+        0.4
+      )
+      .to(
+        this.material.uniforms.uCorners.value,
+        {
+          w: 1,
+          duration: 1,
+        },
+        0.6
+      );
 
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     this.scene.add(this.mesh);
@@ -88,12 +123,11 @@ export default class Sketch {
     this.time += 0.05;
     this.material.uniforms.time.value = this.time;
     this.material.uniforms.uProgress.value = this.settings.progress;
+    // this.tl.progress(this.settings.progress);
 
     this.renderer.render(this.scene, this.camera);
     window.requestAnimationFrame(this.render.bind(this));
   }
 }
 
-new Sketch({
-  dom: document.getElementById("container"),
-});
+new Sketch({ dom: document.getElementById("container") });
