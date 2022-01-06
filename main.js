@@ -1,6 +1,7 @@
 import "./style.css";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import ASScroll from "@ashthornton/asscroll";
 
 import gsap from "gsap";
 
@@ -8,126 +9,129 @@ import * as dat from "dat.gui";
 
 import fragment from "./shaders/fragment.glsl";
 import vertex from "./shaders/vertex.glsl";
+import testTexture from "./textures/texture1.jpg";
 
-import testTexture from "./textures/hud.jpg";
+const scene = new THREE.Scene();
+const container = document.getElementById("container");
+const width = container.offsetWidth;
+const height = container.offsetHeight;
+const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+camera.fov = (2 * Math.atan(height / 2 / 600) * 180) / Math.PI;
+camera.position.z = 600;
 
-export default class Sketch {
-  constructor(options) {
-    this.container = options.dom;
-    this.scene = new THREE.Scene();
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(width, height);
+container.appendChild(renderer.domElement);
 
-    this.width = this.container.offsetWidth;
-    this.height = this.container.offsetHeight;
+const asscroll = new ASScroll({ disableRaf: true });
+asscroll.enable({ horizontalScroll: true });
 
-    this.camera = new THREE.PerspectiveCamera(
-      30,
-      this.width / this.height,
-      10,
-      1000
-    );
+const geometry = new THREE.PlaneBufferGeometry(1, 1, 30, 30);
+const material = new THREE.ShaderMaterial({
+  uniforms: {
+    uTexture: { value: new THREE.TextureLoader().load(testTexture) },
+    uProgress: { value: 0 },
+    uResolution: { value: new THREE.Vector2(width, height) },
+    uQuadSize: { value: new THREE.Vector2(500, 500) },
+    uCorners: { value: new THREE.Vector2(0, 0) },
+  },
+  vertexShader: vertex,
+  fragmentShader: fragment,
+});
+const cube = new THREE.Mesh(geometry, material);
+cube.scale.set(500, 500, 1);
+// scene.add(cube);
+cube.position.x = 300;
 
-    //camera fov angle calculation
-    //this.camera.fov = 2 * Math.atan(this.height / 2 / 600)* 180 / Math.PI;
-    const halfAngle = Math.atan(this.height / 2 / 600); // 600 distance from camera
-    const radToDeg = (halfAngle * 180) / Math.PI; // Radien to Degree
-    this.camera.fov = radToDeg * 2;
+const settings = {
+  progress: 0,
+};
 
-    this.camera.position.z = 600;
+// const gui = new dat.GUI();
+// gui.add(settings, "progress", 0, 1, 0.001);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.container.appendChild(this.renderer.domElement);
+//cloning-------------------------------------------------------------------
+let materialArray = [];
+const images = [...document.querySelectorAll(".js-image")];
+const imageStore = images.map((img) => {
+  let newMaterial = material.clone();
+  materialArray.push(newMaterial);
 
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+  let newTexture = new THREE.Texture(img);
+  newTexture.needsUpdate = true;
 
-    this.time = 0;
-    this.setupSettings();
-    this.resize();
-    this.setUpResize();
-    this.addObjects();
-    this.render();
-  }
+  newMaterial.uniforms.uTexture.value = newTexture;
 
-  setupSettings() {
-    this.settings = {
-      progress: 0,
-    };
-    this.gui = new dat.GUI();
-    this.gui.add(this.settings, "progress", 0, 1, 0.001);
-  }
-
-  setUpResize() {
-    window.addEventListener("resize", this.resize.bind(this));
-  }
-  resize() {
-    this.width = this.container.offsetWidth;
-    this.height = this.container.offsetHeight;
-    this.renderer.setSize(this.width, this.height);
-    this.camera.aspect = this.width / this.height;
-    this.camera.updateProjectionMatrix();
-  }
-  addObjects() {
-    this.geometry = new THREE.PlaneBufferGeometry(300, 300, 100, 100);
-    //Shaders
-    this.material = new THREE.ShaderMaterial({
-      uniforms: {
-        time: { value: 1.0 },
-        uProgress: { value: 0 },
-        uTexture: { value: new THREE.TextureLoader().load(testTexture) },
-        uTextureSize: { value: new THREE.Vector2(100, 100) },
-        uCorners: { value: new THREE.Vector4(0, 0, 0, 0) },
-        uResolution: { value: new THREE.Vector2(this.width, this.height) },
-        uQuadSize: { value: new THREE.Vector2(300, 300) },
-      },
-      fragmentShader: fragment,
-      vertexShader: vertex,
-    });
-
-    //gsap
-    this.tl = gsap
+  img.addEventListener("mouseover", () => {
+    //gsap------------------------------------------------------------------
+    const tl = gsap
       .timeline()
-      .to(this.material.uniforms.uCorners.value, {
-        x: 1,
-        duration: 1,
-      })
-      .to(
-        this.material.uniforms.uCorners.value,
-        {
-          y: 1,
-          duration: 1,
-        },
-        0.2
-      )
-      .to(
-        this.material.uniforms.uCorners.value,
-        {
-          z: 1,
-          duration: 1,
-        },
-        0.4
-      )
-      .to(
-        this.material.uniforms.uCorners.value,
-        {
-          w: 1,
-          duration: 1,
-        },
-        0.6
-      );
+      .to(newMaterial.uniforms.uCorners.value, { x: 1, duration: 0.4 })
+      .to(newMaterial.uniforms.uCorners.value, { y: 1, duration: 0.4 }, 0.2);
+  });
+  img.addEventListener("mouseout", () => {
+    //gsap------------------------------------------------------------------
+    const tl = gsap
+      .timeline()
+      .to(newMaterial.uniforms.uCorners.value, { x: 0, duration: 0.4 })
+      .to(newMaterial.uniforms.uCorners.value, { y: 0, duration: 0.4 }, 0.2);
+  });
 
-    this.mesh = new THREE.Mesh(this.geometry, this.material);
-    this.scene.add(this.mesh);
-    this.mesh.position.x = 300;
-    this.mesh.rotation.z = 30;
-  }
-  render() {
-    this.time += 0.05;
-    this.material.uniforms.time.value = this.time;
-    this.material.uniforms.uProgress.value = this.settings.progress;
-    // this.tl.progress(this.settings.progress);
+  let newMesh = new THREE.Mesh(geometry, newMaterial);
+  scene.add(newMesh);
 
-    this.renderer.render(this.scene, this.camera);
-    window.requestAnimationFrame(this.render.bind(this));
-  }
+  let bounds = img.getBoundingClientRect();
+  newMesh.scale.set(bounds.width, bounds.height, 1);
+
+  return {
+    img: img,
+    newMesh: newMesh,
+    width: bounds.width,
+    height: bounds.height,
+    top: bounds.top,
+    left: bounds.left,
+  };
+});
+
+//Positioning--------------------------------------------------------------
+const setPosition = () => {
+  imageStore.forEach((object) => {
+    object.newMesh.position.x =
+      -asscroll.currentPos + object.left - width / 2 + object.width / 2;
+    object.newMesh.position.y = -object.top + height / 2 - object.width / 2;
+  });
+};
+
+//resize new meshes -------------------------------------------------------
+materialArray.forEach((mat) => {
+  mat.uniforms.uResolution.value.x = width;
+  mat.uniforms.uResolution.value.y = height;
+});
+
+imageStore.forEach((item) => {
+  let bounds = item.img.getBoundingClientRect();
+  item.newMesh.scale.set(bounds.width, bounds.height, 1);
+  item.top = bounds.top;
+  item.left = bounds.left + asscroll.currentPos;
+  item.width = bounds.width;
+  item.height = bounds.height;
+
+  item.newMesh.material.uniforms.uQuadSize.value.x = bounds.width;
+  item.newMesh.material.uniforms.uQuadSize.value.y = bounds.height;
+
+  // item.newMesh.material.uniforms.uTextureSize.value.x = bounds.width;
+  // item.newMesh.material.uniforms.uTextureSize.value.y = bounds.height;
+});
+
+function animate() {
+  requestAnimationFrame(animate);
+  // material.uniforms.uProgress.value = settings.progress;
+  // tl.progress(settings.progress);
+
+  asscroll.update();
+  setPosition();
+
+  renderer.render(scene, camera);
 }
 
-new Sketch({ dom: document.getElementById("container") });
+animate();

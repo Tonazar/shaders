@@ -8,4 +8,44 @@ canvas {
 #container {
   width: 100vw;
   height: 100vh;
+  position: fixed;
+  z-index: -1;
+  top: 0;
+  left: 0;
+}
+
+.content {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  gap: 100px;
+  padding: 200px;
+  /* width: auto; */
+}
+
+/* item */
+.item {
+  font-family: "Coustard", serif;
+  text-decoration: none;
+  color: #eee;
+}
+.item a {
+  text-decoration: none;
+  color: #eee;
+}
+.item h2 {
+  font-weight: 900;
+  color: #fff;
+}
+.item p {
+  font-weight: 400;
+  color: #ccc;
+}
+.item:last-child {
+  margin-right: 300px;
+}
+.item img {
+  width: 30vw;
+  height: 30vw;
+  opacity: 0;
 }

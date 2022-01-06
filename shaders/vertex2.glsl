@@ -1,23 +1,11 @@
-uniform float time;
-uniform float uProgress;
-uniform vec2 uResolution;
-uniform vec2 uQuadSize;
-
 varying vec2 vUv;
-varying vec2 vSize;
 
 void main(){
+    vec3 newPosition = position;
+    // newPosition.z = 0.03 * sin(length(position *30.));
+    // newPosition.z = mod(uv.x * 5.0, 0.3);
+    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(newPosition, 1.0);
+
     vUv = uv;
-    vec4 defaultState = modelMatrix * vec4( position, 1.0 );
-    vec4 fullscreenState = vec4( position, 1.0 );
-
-    fullscreenState.x *= uResolution.x / uQuadSize.x;
-    fullscreenState.y *= uResolution.y / uQuadSize.y;
-
-    vec4 finalState = mix(defaultState, fullscreenState, uProgress);
-
-    vSize = mix(uQuadSize, uResolution, uProgress);
-
-    gl_Position = projectionMatrix * viewMatrix * finalState;
 }
     

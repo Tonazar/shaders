@@ -12,6 +12,7 @@
     "vite-plugin-glsl": "0.0.5"
   },
   "dependencies": {
+    "@ashthornton/asscroll": "^2.0.4",
     "gsap": "^3.9.0",
     "three": "^0.135.0"
   }
